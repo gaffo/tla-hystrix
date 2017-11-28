@@ -8,7 +8,7 @@ variables failures = 0,
           states = {"closed", "open"},
           subStates = {"up", "down"},
           subState \in subStates,
-          tm = 0,
+          time = 0,
           retryTime \in 1..5,
           running = TRUE,
     {
@@ -26,18 +26,18 @@ variables failures = 0,
                 };
             } else {
                 HYX_CHECK_OPEN_CIRCUIT: 
-                tm := tm + 1;
-                if (tm >= retryTime) {
+                time := time + 1;
+                if (time >= retryTime) {
                     HYX_OPEN_TIMER_FIRED:
                     if (subState = "up") {
                         HYX_TRY_TIMER:
                         state := "closed";
-                        tm := 0;
+                        time := 0;
                         running := FALSE;
                     } 
                     else {
                         HYX_OPEN_RESET_TIMER: 
-                        tm := 0;
+                        time := 0;
                     };
                 };
             };
@@ -46,10 +46,10 @@ variables failures = 0,
 }
 end algorithm *)
 \* BEGIN TRANSLATION
-VARIABLES failures, maxFailures, state, states, subStates, subState, tm, 
+VARIABLES failures, maxFailures, state, states, subStates, subState, time, 
           retryTime, running, pc
 
-vars == << failures, maxFailures, state, states, subStates, subState, tm, 
+vars == << failures, maxFailures, state, states, subStates, subState, time, 
            retryTime, running, pc >>
 
 Init == (* Global variables *)
@@ -59,7 +59,7 @@ Init == (* Global variables *)
         /\ states = {"closed", "open"}
         /\ subStates = {"up", "down"}
         /\ subState \in subStates
-        /\ tm = 0
+        /\ time = 0
         /\ retryTime \in 1..5
         /\ running = TRUE
         /\ pc = "HYX_PROCESSING"
@@ -71,45 +71,46 @@ HYX_PROCESSING == /\ pc = "HYX_PROCESSING"
                                    ELSE /\ pc' = "HYX_CHECK_OPEN_CIRCUIT"
                         ELSE /\ pc' = "Done"
                   /\ UNCHANGED << failures, maxFailures, state, states, 
-                                  subStates, subState, tm, retryTime, running >>
+                                  subStates, subState, time, retryTime, 
+                                  running >>
 
 HYX_CHECK_CLOSED_CIRCUIT == /\ pc = "HYX_CHECK_CLOSED_CIRCUIT"
                             /\ IF subState = "up"
                                   THEN /\ pc' = "HYX_RESET_FAILURES"
                                   ELSE /\ pc' = "HYX_INCREMENT_FAILURE"
                             /\ UNCHANGED << failures, maxFailures, state, 
-                                            states, subStates, subState, tm, 
+                                            states, subStates, subState, time, 
                                             retryTime, running >>
 
 HYX_RESET_FAILURES == /\ pc = "HYX_RESET_FAILURES"
                       /\ failures' = 0
                       /\ pc' = "HYX_PROCESSING"
                       /\ UNCHANGED << maxFailures, state, states, subStates, 
-                                      subState, tm, retryTime, running >>
+                                      subState, time, retryTime, running >>
 
 HYX_INCREMENT_FAILURE == /\ pc = "HYX_INCREMENT_FAILURE"
                          /\ failures' = failures + 1
                          /\ pc' = "HYX_CHECK_FAILURES"
                          /\ UNCHANGED << maxFailures, state, states, subStates, 
-                                         subState, tm, retryTime, running >>
+                                         subState, time, retryTime, running >>
 
 HYX_CHECK_FAILURES == /\ pc = "HYX_CHECK_FAILURES"
                       /\ IF failures >= maxFailures
                             THEN /\ pc' = "HYX_OPEN"
                             ELSE /\ pc' = "HYX_PROCESSING"
                       /\ UNCHANGED << failures, maxFailures, state, states, 
-                                      subStates, subState, tm, retryTime, 
+                                      subStates, subState, time, retryTime, 
                                       running >>
 
 HYX_OPEN == /\ pc = "HYX_OPEN"
             /\ state' = "open"
             /\ pc' = "HYX_PROCESSING"
             /\ UNCHANGED << failures, maxFailures, states, subStates, subState, 
-                            tm, retryTime, running >>
+                            time, retryTime, running >>
 
 HYX_CHECK_OPEN_CIRCUIT == /\ pc = "HYX_CHECK_OPEN_CIRCUIT"
-                          /\ tm' = tm + 1
-                          /\ IF tm' >= retryTime
+                          /\ time' = time + 1
+                          /\ IF time' >= retryTime
                                 THEN /\ pc' = "HYX_OPEN_TIMER_FIRED"
                                 ELSE /\ pc' = "HYX_PROCESSING"
                           /\ UNCHANGED << failures, maxFailures, state, states, 
@@ -121,19 +122,19 @@ HYX_OPEN_TIMER_FIRED == /\ pc = "HYX_OPEN_TIMER_FIRED"
                               THEN /\ pc' = "HYX_TRY_TIMER"
                               ELSE /\ pc' = "HYX_OPEN_RESET_TIMER"
                         /\ UNCHANGED << failures, maxFailures, state, states, 
-                                        subStates, subState, tm, retryTime, 
+                                        subStates, subState, time, retryTime, 
                                         running >>
 
 HYX_TRY_TIMER == /\ pc = "HYX_TRY_TIMER"
                  /\ state' = "closed"
-                 /\ tm' = 0
+                 /\ time' = 0
                  /\ running' = FALSE
                  /\ pc' = "HYX_PROCESSING"
                  /\ UNCHANGED << failures, maxFailures, states, subStates, 
                                  subState, retryTime >>
 
 HYX_OPEN_RESET_TIMER == /\ pc = "HYX_OPEN_RESET_TIMER"
-                        /\ tm' = 0
+                        /\ time' = 0
                         /\ pc' = "HYX_PROCESSING"
                         /\ UNCHANGED << failures, maxFailures, state, states, 
                                         subStates, subState, retryTime, 
@@ -157,5 +158,5 @@ HyxOK == /\ state \in states
 
 =============================================================================
 \* Modification History
-\* Last modified Mon Nov 27 21:07:04 PST 2017 by gaffo
+\* Last modified Mon Nov 27 21:06:07 PST 2017 by gaffo
 \* Created Mon Nov 27 15:46:58 PST 2017 by gaffo
